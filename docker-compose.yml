@@ -1,38 +1,32 @@
-version: "3.9"
-
 services:
   db:
     image: postgres:16-alpine
     environment:
       POSTGRES_DB: orion
-      POSTGRES_USER: orion
-      POSTGRES_PASSWORD: orion
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
 
   backend:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
+    build: ./backend
     environment:
-      DATABASE_URL: postgresql+psycopg2://orion:orion@db:5432/orion
-      JWT_SECRET: change-me-in-production
-      CORS_ORIGINS: http://localhost:5173
+      ORION_DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/orion
     ports:
       - "8000:8000"
     depends_on:
       - db
 
   frontend:
-    build:
-      context: .
-      dockerfile: frontend/Dockerfile
+    build: ./frontend
+    environment:
+      VITE_API_BASE_URL: http://localhost:8000/api/v1
     ports:
       - "5173:5173"
     depends_on:
       - backend
 
 volumes:
-  postgres_data:
+  pgdata:

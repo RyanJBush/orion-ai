@@ -1,27 +1,30 @@
-SHELL := /bin/bash
+.PHONY: install install-backend install-frontend dev dev-backend dev-frontend test lint up down
 
-.PHONY: setup dev backend frontend lint test format
+install: install-backend install-frontend
 
-setup:
-	cd backend && pip install -r requirements.txt
+install-backend:
+	cd backend && python -m pip install -e .[dev]
+
+install-frontend:
 	cd frontend && npm install
 
-dev:
-	docker compose up --build
+dev: dev-backend
 
-backend:
-	cd backend && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+dev-backend:
+	cd backend && uvicorn app.main:app --reload --port 8000
 
-frontend:
-	cd frontend && npm run dev -- --host 0.0.0.0 --port 5173
-
-lint:
-	cd backend && ruff check .
-	cd frontend && npm run lint
+dev-frontend:
+	cd frontend && npm run dev
 
 test:
-	cd backend && pytest -q
+	cd backend && pytest
 
-format:
-	cd backend && ruff check --fix .
-	cd frontend && npm run format
+lint:
+	cd backend && ruff check app
+	cd frontend && npm run lint
+
+up:
+	docker compose up --build
+
+down:
+	docker compose down -v

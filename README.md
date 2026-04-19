@@ -1,38 +1,46 @@
-# Orion AI
+# Orion AI Monorepo
 
-Orion AI is a production-style monorepo for a multi-agent workflow orchestration platform.
+Production-style monorepo for an agentic workflow platform with FastAPI, React, PostgreSQL, workflow orchestration, tool abstraction, and memory services.
 
-## Monorepo layout
+## What is implemented
+- Task submission and orchestration entrypoint (`POST /api/v1/tasks/submit`)
+- Planner agent for step decomposition
+- Worker agents for tool-driven step execution
+- Tool abstraction layer with registry + default tools (`echo`, `math`)
+- Workflow execution engine with run/step state tracking
+- Basic memory + vector memory APIs and persistence models
+- SQLAlchemy models/repositories for tasks, runs, steps, agents, memory
+- Structured logging + startup DB initialization
+- Docker Compose, Makefile targets, and CI scaffold
 
+## Repository layout
 ```text
-.
-├── backend
-├── docs
-├── frontend
-├── CONTRIBUTING.md
-├── LICENSE
-├── Makefile
-└── docker-compose.yml
+backend/      FastAPI API + orchestration runtime
+frontend/     React/Vite UI scaffold
+docs/         Architecture and API docs
+.github/      CI workflows
 ```
 
-## Tech stack
-
-- **Backend:** FastAPI + Python
-- **AI orchestration:** LangChain primitives + planner/worker workflow engine
-- **Database:** PostgreSQL (via docker-compose), SQLAlchemy models
-- **Memory:** FAISS vector store
-- **Auth:** JWT with RBAC checks
-- **Frontend:** React + Vite + Tailwind CSS
-- **Infra:** Docker, docker-compose, GitHub Actions
-- **Quality:** pytest, ruff, eslint, prettier
-
-## Quick start
-
+## Local run
+### Docker
 ```bash
-make setup
-make dev
+make up
 ```
 
-The backend will run on `http://localhost:8000` and frontend on `http://localhost:5173`.
+### Local dev
+```bash
+make install
+make dev-backend
+# another terminal
+make dev-frontend
+```
 
-See `/docs` for architecture notes.
+## API snapshot
+- `POST /api/v1/tasks/submit`
+- `GET /api/v1/tasks/{task_id}`
+- `GET /api/v1/workflows/runs/{run_id}`
+- `POST /api/v1/memory/basic/write`
+- `POST /api/v1/memory/vector/write`
+- `POST /api/v1/memory/vector/search`
+
+See `docs/api.md` for full list.

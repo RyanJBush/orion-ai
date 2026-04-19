@@ -1,13 +1,13 @@
-import os
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class Settings:
-    database_url: str = os.getenv("DATABASE_URL", "sqlite:///./orion.db")
-    jwt_secret: str = os.getenv("JWT_SECRET", "dev-secret")
-    jwt_algorithm: str = "HS256"
-    cors_origins: list[str] = [
-        origin.strip() for origin in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",")
-    ]
+class Settings(BaseSettings):
+    app_name: str = "Orion AI API"
+    environment: str = "development"
+    log_level: str = "INFO"
+    database_url: str = "sqlite:///./orion.db"
+
+    model_config = SettingsConfigDict(env_file=".env", env_prefix="ORION_")
 
 
 settings = Settings()
