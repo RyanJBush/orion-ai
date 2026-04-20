@@ -17,6 +17,7 @@ from app.repositories.workflow_repository import WorkflowRunRepository
 from app.schemas.memory import VectorWriteRequest
 from app.schemas.workflow import WorkflowRun, WorkflowTimelineEvent
 from app.services.memory_service import MemoryService
+from app.tools.base import ToolPermissionError, ToolRuntimeError, ToolTimeoutError
 from app.tools.registry import tool_registry
 
 logger = logging.getLogger(__name__)
@@ -96,7 +97,7 @@ class WorkflowEngine:
                     retried=attempts > 1,
                     used_fallback=used_fallback,
                 )
-            except Exception as exc:  # noqa: BLE001
+            except (ToolTimeoutError, ToolRuntimeError, KeyError) as exc:
                 last_error = str(exc)
                 if step.fallback_action and not used_fallback:
                     action = step.fallback_action
@@ -106,6 +107,9 @@ class WorkflowEngine:
                     break
                 backoff_delay = min(step.backoff_seconds * (2 ** (attempts - 1)), MAX_BACKOFF_SECONDS)
                 time.sleep(backoff_delay)
+            except ToolPermissionError as exc:
+                last_error = str(exc)
+                break
 
         latency_ms = int((time.perf_counter() - start) * 1000)
         return StepExecutionOutcome(

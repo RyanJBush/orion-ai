@@ -1,7 +1,10 @@
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
+import logging
 
 from app.tools.base import Tool, ToolPermissionError, ToolRuntimeError, ToolSchema, ToolTimeoutError
 from app.tools.default_tools import EchoTool, FlakyTool, MathTool, SlowEchoTool
+
+logger = logging.getLogger(__name__)
 
 
 class ToolRegistry:
@@ -97,6 +100,7 @@ class ToolRegistry:
             except Exception:  # noqa: BLE001
                 status = "unhealthy"
                 is_healthy = False
+                logger.exception("tool.healthcheck_failed", extra={"tool": name})
             rows.append({"tool": name, "healthy": is_healthy, "status": status})
         return rows
 

@@ -41,7 +41,7 @@ class ExecutionStepModel(TimestampMixin, Base):
     worker_name: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     action: Mapped[str] = mapped_column(String(64), nullable=False)
     input_text: Mapped[str] = mapped_column(Text, nullable=False)
-    dependencies: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    dependencies: Mapped[list[str]] = mapped_column(JSON, default=lambda: [], nullable=False)
     expected_output: Mapped[str] = mapped_column(Text, default="", nullable=False)
     completion_criteria: Mapped[str] = mapped_column(Text, default="", nullable=False)
     output_text: Mapped[str] = mapped_column(Text, default="", nullable=False)
@@ -68,7 +68,7 @@ class WorkflowTimelineEventModel(Base):
     step_id: Mapped[int | None] = mapped_column(ForeignKey("execution_steps.id", ondelete="CASCADE"), nullable=True)
     event_type: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     message: Mapped[str] = mapped_column(Text, default="", nullable=False)
-    event_metadata: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
+    event_metadata: Mapped[dict] = mapped_column(JSON, default=lambda: {}, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     run = relationship("WorkflowRunModel", back_populates="timeline_events")
