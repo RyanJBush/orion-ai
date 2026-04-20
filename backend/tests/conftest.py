@@ -14,7 +14,7 @@ from app.main import app
 @pytest.fixture()
 def db_session() -> Generator[Session, None, None]:
     engine = create_engine(
-        "sqlite+pysqlite://",
+        "sqlite+pysqlite:///:memory:",
         future=True,
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,

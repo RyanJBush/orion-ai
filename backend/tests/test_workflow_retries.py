@@ -11,7 +11,8 @@ def test_flaky_step_retries_and_completes_with_fallback(client):
     run = response.json()
     assert run["status"] == "completed"
 
-    flaky_step = next(step for step in run["steps"] if step["action"] == "flaky")
+    flaky_step = next((step for step in run["steps"] if step["action"] == "flaky"), None)
+    assert flaky_step is not None
     assert flaky_step["attempt_count"] >= 2
     assert flaky_step["status"] == "completed"
 

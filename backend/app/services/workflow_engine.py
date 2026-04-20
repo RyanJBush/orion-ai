@@ -20,6 +20,8 @@ from app.services.memory_service import MemoryService
 from app.tools.registry import tool_registry
 
 logger = logging.getLogger(__name__)
+MAX_BACKOFF_SECONDS = 1.0
+MAX_PARALLEL_STEPS = 8
 
 
 @dataclass
@@ -102,7 +104,8 @@ class WorkflowEngine:
                     continue
                 if attempts >= max_attempts:
                     break
-                time.sleep(step.backoff_seconds * (2 ** (attempts - 1)))
+                backoff_delay = min(step.backoff_seconds * (2 ** (attempts - 1)), MAX_BACKOFF_SECONDS)
+                time.sleep(backoff_delay)
 
         latency_ms = int((time.perf_counter() - start) * 1000)
         return StepExecutionOutcome(
@@ -203,7 +206,7 @@ class WorkflowEngine:
                 )
 
             outcomes: dict[str, StepExecutionOutcome] = {}
-            with ThreadPoolExecutor(max_workers=len(ready_step_ids)) as executor:
+            with ThreadPoolExecutor(max_workers=min(len(ready_step_ids), MAX_PARALLEL_STEPS)) as executor:
                 futures = {
                     executor.submit(self._execute_with_retry, step_rows[step_id]): step_id for step_id in ready_step_ids
                 }
