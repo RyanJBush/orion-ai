@@ -15,15 +15,19 @@ class TaskStatus(str, Enum):
 
 
 class WorkflowRunStatus(str, Enum):
-    queued = "queued"
+    pending = "pending"
     running = "running"
+    blocked = "blocked"
+    retrying = "retrying"
     completed = "completed"
     failed = "failed"
 
 
 class StepStatus(str, Enum):
-    queued = "queued"
+    pending = "pending"
     running = "running"
+    blocked = "blocked"
+    retrying = "retrying"
     completed = "completed"
     failed = "failed"
 
