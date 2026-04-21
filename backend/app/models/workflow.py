@@ -4,7 +4,7 @@ from sqlalchemy import JSON, DateTime, Enum, Float, ForeignKey, Integer, String,
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
-from app.models.common import StepStatus, TimestampMixin, WorkflowRunStatus
+from app.models.common import ApprovalStatus, StepStatus, TimestampMixin, WorkflowRunStatus
 
 
 class WorkflowModel(TimestampMixin, Base):
@@ -25,6 +25,8 @@ class WorkflowRunModel(TimestampMixin, Base):
         Enum(WorkflowRunStatus), default=WorkflowRunStatus.pending, nullable=False
     )
     trace_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    pause_requested: Mapped[bool] = mapped_column(default=False, nullable=False)
+    cancel_requested: Mapped[bool] = mapped_column(default=False, nullable=False)
 
     task = relationship("TaskModel", back_populates="workflow_runs")
     steps = relationship("ExecutionStepModel", back_populates="run", cascade="all, delete-orphan")
@@ -51,6 +53,7 @@ class ExecutionStepModel(TimestampMixin, Base):
     backoff_seconds: Mapped[float] = mapped_column(Float, default=0.05, nullable=False)
     timeout_seconds: Mapped[float] = mapped_column(Float, default=2.0, nullable=False)
     fallback_action: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    fallback_on_errors: Mapped[list[str]] = mapped_column(JSON, default=lambda: [], nullable=False)
     latency_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     last_error: Mapped[str | None] = mapped_column(Text, nullable=True)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -73,3 +76,29 @@ class WorkflowTimelineEventModel(Base):
 
     run = relationship("WorkflowRunModel", back_populates="timeline_events")
     step = relationship("ExecutionStepModel", back_populates="timeline_events")
+
+
+class ToolApprovalModel(TimestampMixin, Base):
+    __tablename__ = "tool_approvals"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    run_id: Mapped[int] = mapped_column(ForeignKey("workflow_runs.id", ondelete="CASCADE"), nullable=False, index=True)
+    step_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    tool_name: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    status: Mapped[ApprovalStatus] = mapped_column(Enum(ApprovalStatus), default=ApprovalStatus.pending, nullable=False)
+    requested_by: Mapped[str] = mapped_column(String(64), default="system", nullable=False)
+    reviewed_by: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class WorkflowTemplateModel(TimestampMixin, Base):
+    __tablename__ = "workflow_templates"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(128), nullable=False, unique=True, index=True)
+    description: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    task_title: Mapped[str] = mapped_column(String(128), nullable=False)
+    task_description: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    workflow_name: Mapped[str] = mapped_column(String(128), default="default", nullable=False)
+    tags: Mapped[list[str]] = mapped_column(JSON, default=lambda: [], nullable=False)
+    is_demo: Mapped[bool] = mapped_column(default=False, nullable=False)

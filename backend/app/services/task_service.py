@@ -17,7 +17,7 @@ class TaskService:
         return [Task.model_validate(row) for row in self.repo.list()]
 
     def create_task(self, payload: TaskCreate) -> Task:
-        row = self.repo.create(payload.title, payload.description)
+        row = self.repo.create(payload.title, payload.description, payload.priority)
         logger.info("task.created", extra={"task_id": row.id})
         return Task.model_validate(row)
 
@@ -32,3 +32,7 @@ class TaskService:
         updated = self.repo.set_status(row, status)
         logger.info("task.status_updated", extra={"task_id": task_id, "status": status.value})
         return Task.model_validate(updated)
+
+    def pop_next_queued_task(self) -> Task | None:
+        row = self.repo.pop_next_queued()
+        return Task.model_validate(row) if row else None

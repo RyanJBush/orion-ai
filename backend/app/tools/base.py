@@ -26,6 +26,9 @@ class ToolSchema:
     output_schema: dict[str, str]
     timeout_seconds: float = 5.0
     allowed_workers: list[str] = field(default_factory=list)
+    is_demo_tool: bool = False
+    requires_approval: bool = False
+    risk_level: str = "low"
 
 
 class Tool(ABC):
