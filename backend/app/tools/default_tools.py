@@ -41,3 +41,10 @@ class FlakyTool(Tool):
         if attempt == 1:
             raise RuntimeError("transient_failure")
         return f"recovered:{input_text}"
+
+
+class SensitiveEchoTool(Tool):
+    name = "sensitive_echo"
+
+    def run(self, input_text: str) -> str:
+        return f"approved:{input_text}"

@@ -26,6 +26,7 @@ class ExecutionStep(BaseModel):
     max_retries: int = 0
     latency_ms: int | None = None
     fallback_action: str | None = None
+    fallback_on_errors: list[str] = Field(default_factory=list)
 
     class Config:
         from_attributes = True
@@ -37,8 +38,20 @@ class WorkflowRun(BaseModel):
     task_id: int
     trace_id: str
     status: WorkflowRunStatus
+    pause_requested: bool = False
+    cancel_requested: bool = False
     created_at: datetime | None = None
     steps: list[ExecutionStep] = Field(default_factory=list)
+
+    class Config:
+        from_attributes = True
+
+
+class WorkflowRunControlResponse(BaseModel):
+    run_id: int
+    status: WorkflowRunStatus
+    pause_requested: bool
+    cancel_requested: bool
 
     class Config:
         from_attributes = True
@@ -72,3 +85,48 @@ class WorkflowMetrics(BaseModel):
     avg_step_latency_ms: float
     run_status_counts: dict[str, int]
     tool_reliability: list[ToolReliabilityMetric]
+
+
+class WorkflowRunMetrics(BaseModel):
+    run_id: int
+    trace_id: str
+    total_steps: int
+    completed_steps: int
+    failed_steps: int
+    retried_steps: int
+    fallback_steps: int
+    avg_step_latency_ms: float
+
+
+class WorkflowRunInsight(BaseModel):
+    run_id: int
+    trace_id: str
+    summary: str
+    plan_explanation: str
+    quality_score: float
+    reflection: str
+    suggested_actions: list[str] = Field(default_factory=list)
+
+
+class WorkflowTemplateCreate(BaseModel):
+    name: str
+    description: str = ""
+    task_title: str
+    task_description: str = ""
+    workflow_name: str = "default"
+    tags: list[str] = Field(default_factory=list)
+    is_demo: bool = False
+
+
+class WorkflowTemplate(BaseModel):
+    id: int
+    name: str
+    description: str
+    task_title: str
+    task_description: str
+    workflow_name: str
+    tags: list[str] = Field(default_factory=list)
+    is_demo: bool = False
+
+    class Config:
+        from_attributes = True

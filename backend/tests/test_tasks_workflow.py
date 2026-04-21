@@ -23,6 +23,18 @@ def test_submit_task_creates_run(client):
     assert metrics.status_code == 200
     assert metrics.json()["total_runs"] >= 1
 
+    insights = client.get(f"/api/v1/workflows/runs/{data['id']}/insights")
+    assert insights.status_code == 200
+    insight_payload = insights.json()
+    assert insight_payload["run_id"] == data["id"]
+    assert insight_payload["quality_score"] >= 0
+    assert len(insight_payload["suggested_actions"]) >= 1
+
+    memory_summary = client.get(f"/api/v1/memory/summary/task:{data['task_id']}")
+    assert memory_summary.status_code == 200
+    summary_payload = memory_summary.json()
+    assert summary_payload["by_type"]["prior_output"] >= 1
+
 
 def test_get_task(client):
     created = client.post("/api/v1/tasks", json={"title": "Task one", "description": "D1"})
@@ -32,3 +44,76 @@ def test_get_task(client):
     fetched = client.get(f"/api/v1/tasks/{task_id}")
     assert fetched.status_code == 200
     assert fetched.json()["id"] == task_id
+
+
+def test_workflow_run_metrics_endpoint(client):
+    response = client.post(
+        "/api/v1/tasks/submit",
+        json={
+            "title": "Resilient workflow",
+            "description": "flaky downstream call. then summarize response",
+            "workflow_name": "default",
+        },
+    )
+    assert response.status_code == 200
+    run_id = response.json()["id"]
+
+    metrics = client.get(f"/api/v1/workflows/runs/{run_id}/metrics")
+    assert metrics.status_code == 200
+    payload = metrics.json()
+    assert payload["run_id"] == run_id
+    assert payload["total_steps"] >= 1
+    assert payload["retried_steps"] >= 1
+
+
+def test_dispatch_next_queued_task_respects_priority(client):
+    low = client.post("/api/v1/tasks/enqueue", json={"title": "Low", "description": "echo this", "priority": "low"})
+    urgent = client.post(
+        "/api/v1/tasks/enqueue", json={"title": "Urgent", "description": "echo now", "priority": "urgent"}
+    )
+    assert low.status_code == 200
+    assert urgent.status_code == 200
+
+    dispatched = client.post("/api/v1/tasks/dispatch-next", json={"workflow_name": "default"})
+    assert dispatched.status_code == 200
+    assert dispatched.json()["task_id"] == urgent.json()["id"]
+
+
+def test_workflow_control_endpoints(client):
+    submitted = client.post(
+        "/api/v1/tasks/submit",
+        json={"title": "Cancelable run", "description": "echo first", "workflow_name": "default"},
+    )
+    assert submitted.status_code == 200
+    run_id = submitted.json()["id"]
+
+    pause = client.post(f"/api/v1/workflows/runs/{run_id}/pause")
+    assert pause.status_code == 409
+
+    cancel = client.post(f"/api/v1/workflows/runs/{run_id}/cancel")
+    assert cancel.status_code == 409
+
+
+def test_workflow_template_create_list_and_run(client):
+    created = client.post(
+        "/api/v1/workflows/templates",
+        json={
+            "name": "demo-report-template",
+            "description": "Demo scenario",
+            "task_title": "Run demo report",
+            "task_description": "collect metrics. calculate 4 + 5",
+            "workflow_name": "default",
+            "tags": ["demo", "report"],
+            "is_demo": True,
+        },
+    )
+    assert created.status_code == 200
+    template_id = created.json()["id"]
+
+    listed = client.get("/api/v1/workflows/templates")
+    assert listed.status_code == 200
+    assert any(row["id"] == template_id for row in listed.json())
+
+    run = client.post(f"/api/v1/workflows/templates/{template_id}/run")
+    assert run.status_code == 200
+    assert run.json()["status"] in {"completed", "failed"}

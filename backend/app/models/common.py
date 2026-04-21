@@ -17,19 +17,48 @@ class TaskStatus(str, Enum):
 class WorkflowRunStatus(str, Enum):
     pending = "pending"
     running = "running"
+    paused = "paused"
     blocked = "blocked"
     retrying = "retrying"
     completed = "completed"
+    canceled = "canceled"
     failed = "failed"
 
 
 class StepStatus(str, Enum):
     pending = "pending"
     running = "running"
+    paused = "paused"
     blocked = "blocked"
     retrying = "retrying"
     completed = "completed"
+    canceled = "canceled"
     failed = "failed"
+
+
+class TaskPriority(str, Enum):
+    low = "low"
+    normal = "normal"
+    high = "high"
+    urgent = "urgent"
+
+
+class MemoryScope(str, Enum):
+    short_term = "short_term"
+    long_term = "long_term"
+
+
+class MemoryType(str, Enum):
+    fact = "fact"
+    preference = "preference"
+    prior_output = "prior_output"
+    tool_result = "tool_result"
+
+
+class ApprovalStatus(str, Enum):
+    pending = "pending"
+    approved = "approved"
+    rejected = "rejected"
 
 
 class TimestampMixin:

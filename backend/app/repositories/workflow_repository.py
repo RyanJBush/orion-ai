@@ -41,6 +41,7 @@ class WorkflowRunRepository:
         backoff_seconds: float,
         timeout_seconds: float,
         fallback_action: str | None,
+        fallback_on_errors: list[str],
         status: StepStatus = StepStatus.pending,
         output_text: str = "",
     ) -> ExecutionStepModel:
@@ -60,6 +61,7 @@ class WorkflowRunRepository:
             backoff_seconds=backoff_seconds,
             timeout_seconds=timeout_seconds,
             fallback_action=fallback_action,
+            fallback_on_errors=fallback_on_errors,
         )
         self.db.add(step)
         self.db.commit()
@@ -128,3 +130,21 @@ class WorkflowRunRepository:
             .filter(WorkflowRunModel.id == run_id)
             .first()
         )
+
+    def request_pause(self, run: WorkflowRunModel) -> WorkflowRunModel:
+        run.pause_requested = True
+        self.db.commit()
+        self.db.refresh(run)
+        return run
+
+    def clear_pause_request(self, run: WorkflowRunModel) -> WorkflowRunModel:
+        run.pause_requested = False
+        self.db.commit()
+        self.db.refresh(run)
+        return run
+
+    def request_cancel(self, run: WorkflowRunModel) -> WorkflowRunModel:
+        run.cancel_requested = True
+        self.db.commit()
+        self.db.refresh(run)
+        return run

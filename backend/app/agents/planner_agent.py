@@ -19,6 +19,7 @@ class PlannedStep:
     completion_criteria: str
     retry_policy: RetryPolicy
     fallback_action: str | None = None
+    fallback_on_errors: list[str] | None = None
 
 
 class PlannerAgent:
@@ -33,7 +34,10 @@ class PlannerAgent:
         steps: list[PlannedStep] = []
         previous_step_id: str | None = None
         for idx, chunk in enumerate(chunks, start=1):
-            if "flaky" in chunk.lower():
+            if any(token in chunk.lower() for token in ["sensitive", "approve", "approval"]):
+                action = "sensitive_echo"
+                worker = "worker-general"
+            elif "flaky" in chunk.lower():
                 action = "flaky"
                 worker = "worker-general"
             elif any(ch.isdigit() for ch in chunk):
@@ -59,6 +63,7 @@ class PlannerAgent:
                     completion_criteria="Tool call succeeds and returns output.",
                     retry_policy=retry_policy,
                     fallback_action="echo" if action in {"flaky", "slow_echo"} else None,
+                    fallback_on_errors=["timeout", "runtime"] if action in {"flaky", "slow_echo"} else None,
                 )
             )
             previous_step_id = step_id

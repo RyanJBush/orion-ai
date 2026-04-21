@@ -2,7 +2,7 @@ from concurrent.futures import ThreadPoolExecutor, TimeoutError
 import logging
 
 from app.tools.base import Tool, ToolPermissionError, ToolRuntimeError, ToolSchema, ToolTimeoutError
-from app.tools.default_tools import EchoTool, FlakyTool, MathTool, SlowEchoTool
+from app.tools.default_tools import EchoTool, FlakyTool, MathTool, SensitiveEchoTool, SlowEchoTool
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +20,7 @@ class ToolRegistry:
                 output_schema={"output_text": "string"},
                 timeout_seconds=2.0,
                 allowed_workers=["worker-general", "worker-math"],
+                is_demo_tool=True,
             ),
         )
         self.register(
@@ -31,6 +32,7 @@ class ToolRegistry:
                 output_schema={"output_text": "string"},
                 timeout_seconds=2.0,
                 allowed_workers=["worker-math"],
+                is_demo_tool=True,
             ),
         )
         self.register(
@@ -42,6 +44,7 @@ class ToolRegistry:
                 output_schema={"output_text": "string"},
                 timeout_seconds=0.05,
                 allowed_workers=["worker-general"],
+                is_demo_tool=True,
             ),
         )
         self.register(
@@ -53,6 +56,21 @@ class ToolRegistry:
                 output_schema={"output_text": "string"},
                 timeout_seconds=1.0,
                 allowed_workers=["worker-general"],
+                is_demo_tool=True,
+            ),
+        )
+        self.register(
+            SensitiveEchoTool(),
+            ToolSchema(
+                name="sensitive_echo",
+                description="Mock sensitive action requiring explicit approval.",
+                input_schema={"input_text": "string"},
+                output_schema={"output_text": "string"},
+                timeout_seconds=1.0,
+                allowed_workers=["worker-general"],
+                is_demo_tool=True,
+                requires_approval=True,
+                risk_level="high",
             ),
         )
 
@@ -69,6 +87,9 @@ class ToolRegistry:
         if name not in self._schemas:
             raise KeyError(f"Tool '{name}' schema not registered")
         return self._schemas[name]
+
+    def list_schemas(self) -> list[ToolSchema]:
+        return [self._schemas[name] for name in sorted(self._schemas.keys())]
 
     def run(self, name: str, worker_name: str, input_text: str, timeout_override: float | None = None) -> str:
         tool = self.get(name)

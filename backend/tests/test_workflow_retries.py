@@ -15,6 +15,7 @@ def test_flaky_step_retries_and_completes_with_fallback(client):
     assert flaky_step is not None
     assert flaky_step["attempt_count"] >= 2
     assert flaky_step["status"] == "completed"
+    assert "runtime" in flaky_step["fallback_on_errors"]
 
     timeline = client.get(f"/api/v1/workflows/runs/{run['id']}/timeline")
     assert timeline.status_code == 200
