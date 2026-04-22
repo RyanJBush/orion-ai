@@ -39,7 +39,7 @@ def test_workflow_create_and_list_endpoints(client):
 
 
 def test_workflow_run_endpoints_return_404_for_missing_runs(client):
-    missing_run_id = 999999
+    missing_run_id = -1
     run = client.get(f"/api/v1/workflows/runs/{missing_run_id}")
     timeline = client.get(f"/api/v1/workflows/runs/{missing_run_id}/timeline")
     metrics = client.get(f"/api/v1/workflows/runs/{missing_run_id}/metrics")
@@ -51,7 +51,7 @@ def test_workflow_run_endpoints_return_404_for_missing_runs(client):
 
 
 def test_workflow_template_run_returns_404_for_missing_template(client):
-    response = client.post("/api/v1/workflows/templates/999999/run")
+    response = client.post("/api/v1/workflows/templates/-1/run")
     assert response.status_code == 404
     assert response.json()["detail"] == "Workflow template not found"
 
