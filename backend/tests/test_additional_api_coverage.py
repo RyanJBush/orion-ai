@@ -60,7 +60,7 @@ def test_pause_resume_and_cancel_workflow_controls(client, db_session):
     task_repo = TaskRepository(db_session)
     run_repo = WorkflowRunRepository(db_session)
 
-    paused_task = task_repo.create("Paused run task", "resume path", TaskPriority.normal)
+    paused_task = task_repo.create("Paused run task", "Task for testing resume workflow control", TaskPriority.normal)
     paused_run = run_repo.create_run("default", paused_task.id, "trace-paused")
     run_repo.set_run_status(paused_run, WorkflowRunStatus.paused)
 
@@ -69,7 +69,7 @@ def test_pause_resume_and_cancel_workflow_controls(client, db_session):
     assert resumed.json()["status"] == WorkflowRunStatus.running.value
     assert resumed.json()["pause_requested"] is False
 
-    pending_task = task_repo.create("Pending run task", "pause path", TaskPriority.normal)
+    pending_task = task_repo.create("Pending run task", "Task for testing pause workflow control", TaskPriority.normal)
     pending_run = run_repo.create_run("default", pending_task.id, "trace-pending")
 
     paused = client.post(f"/api/v1/workflows/runs/{pending_run.id}/pause")
@@ -77,7 +77,11 @@ def test_pause_resume_and_cancel_workflow_controls(client, db_session):
     assert paused.json()["status"] == WorkflowRunStatus.paused.value
     assert paused.json()["pause_requested"] is True
 
-    cancellable_task = task_repo.create("Cancellable run task", "cancel path", TaskPriority.normal)
+    cancellable_task = task_repo.create(
+        "Cancellable run task",
+        "Task for testing cancel workflow control",
+        TaskPriority.normal,
+    )
     cancellable_run = run_repo.create_run("default", cancellable_task.id, "trace-cancel")
     run_repo.set_run_status(cancellable_run, WorkflowRunStatus.running)
     run_repo.add_step(
