@@ -2,6 +2,8 @@ from app.models.common import StepStatus, TaskPriority, WorkflowRunStatus
 from app.repositories.task_repository import TaskRepository
 from app.repositories.workflow_repository import WorkflowRunRepository
 
+NONEXISTENT_ID = -1
+
 
 def test_agents_create_and_list_endpoints(client):
     created = client.post("/api/v1/agents", json={"name": "planner-bot", "role": "planner"})
@@ -21,7 +23,7 @@ def test_tool_health_endpoint(client):
     assert response.status_code == 200
     rows = response.json()
     assert len(rows) >= 1
-    assert all({"tool", "healthy", "status"} <= row.keys() for row in rows)
+    assert all(set(row.keys()).issuperset({"tool", "healthy", "status"}) for row in rows)
 
 
 def test_workflow_create_and_list_endpoints(client):
@@ -39,7 +41,7 @@ def test_workflow_create_and_list_endpoints(client):
 
 
 def test_workflow_run_endpoints_return_404_for_missing_runs(client):
-    missing_run_id = -1
+    missing_run_id = NONEXISTENT_ID
     run = client.get(f"/api/v1/workflows/runs/{missing_run_id}")
     timeline = client.get(f"/api/v1/workflows/runs/{missing_run_id}/timeline")
     metrics = client.get(f"/api/v1/workflows/runs/{missing_run_id}/metrics")
@@ -51,7 +53,7 @@ def test_workflow_run_endpoints_return_404_for_missing_runs(client):
 
 
 def test_workflow_template_run_returns_404_for_missing_template(client):
-    response = client.post("/api/v1/workflows/templates/-1/run")
+    response = client.post(f"/api/v1/workflows/templates/{NONEXISTENT_ID}/run")
     assert response.status_code == 404
     assert response.json()["detail"] == "Workflow template not found"
 
