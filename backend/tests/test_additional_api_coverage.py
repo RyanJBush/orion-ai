@@ -58,6 +58,45 @@ def test_workflow_template_run_returns_404_for_missing_template(client):
     assert response.json()["detail"] == "Workflow template not found"
 
 
+def test_get_task_returns_404_for_missing_task(client):
+    response = client.get(f"/api/v1/tasks/{NONEXISTENT_ID}")
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Task not found"
+
+
+def test_dispatch_next_returns_404_when_queue_empty(client):
+    response = client.post("/api/v1/tasks/dispatch-next", json={"workflow_name": "default"})
+    assert response.status_code == 404
+    assert response.json()["detail"] == "No queued tasks available"
+
+
+def test_approval_decision_rejects_pending_status(client):
+    response = client.post(
+        "/api/v1/approvals/1/decision",
+        json={"status": "pending", "reviewed_by": "admin-1"},
+    )
+    assert response.status_code == 422
+    assert response.json()["detail"] == "Decision status cannot be pending"
+
+
+def test_approval_decision_returns_404_for_missing_request(client):
+    response = client.post(
+        f"/api/v1/approvals/{NONEXISTENT_ID}/decision",
+        json={"status": "approved", "reviewed_by": "admin-1"},
+    )
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Approval request not found"
+
+
+def test_memory_correction_returns_404_for_missing_entry(client):
+    response = client.post(
+        f"/api/v1/memory/basic/{NONEXISTENT_ID}/correct",
+        json={"replacement_text": "updated", "source_ref": "test"},
+    )
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Memory entry not found"
+
+
 def test_pause_resume_and_cancel_workflow_controls(client, db_session):
     task_repo = TaskRepository(db_session)
     run_repo = WorkflowRunRepository(db_session)
