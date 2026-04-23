@@ -8,12 +8,12 @@ from app.services.task_service import TaskService
 
 def test_task_service_list_returns_latest_first(db_session):
     service = TaskService(db_session)
-    first = service.create_task(TaskCreate(title="First task", description="d1", priority=TaskPriority.low))
-    second = service.create_task(TaskCreate(title="Second task", description="d2", priority=TaskPriority.high))
+    older_task = service.create_task(TaskCreate(title="First task", description="d1", priority=TaskPriority.low))
+    newer_task = service.create_task(TaskCreate(title="Second task", description="d2", priority=TaskPriority.high))
 
     tasks = service.list_tasks()
 
-    assert [task.id for task in tasks[:2]] == [second.id, first.id]
+    assert [task.id for task in tasks[:2]] == [newer_task.id, older_task.id]
 
 
 def test_task_service_set_status_returns_none_for_missing_task(db_session):
