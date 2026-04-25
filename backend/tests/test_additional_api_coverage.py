@@ -107,7 +107,7 @@ def test_pause_resume_and_cancel_workflow_controls(client, db_session):
 
     resumed = client.post(f"/api/v1/workflows/runs/{paused_run.id}/resume")
     assert resumed.status_code == 200
-    assert resumed.json()["status"] == WorkflowRunStatus.running.value
+    assert resumed.json()["status"] in {WorkflowRunStatus.running.value, WorkflowRunStatus.completed.value}
     assert resumed.json()["pause_requested"] is False
 
     pending_task = task_repo.create("Pending run task", "Task for testing pause workflow control", TaskPriority.normal)

@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import and_, or_
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.models.memory import MemoryEntryModel, VectorMemoryModel
@@ -61,12 +61,42 @@ class VectorMemoryRepository:
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def add(self, namespace: str, text: str, embedding: list[float], metadata: dict | None = None) -> VectorMemoryModel:
-        row = VectorMemoryModel(namespace=namespace, text=text, embedding=embedding)
+    def add(
+        self,
+        namespace: str,
+        text: str,
+        embedding: list[float],
+        *,
+        scope,
+        memory_type,
+        source_ref: str | None,
+        expires_at,
+        metadata: dict | None = None,
+    ) -> VectorMemoryModel:
+        row = VectorMemoryModel(
+            namespace=namespace,
+            text=text,
+            embedding=embedding,
+            scope=scope,
+            memory_type=memory_type,
+            source_ref=source_ref,
+            expires_at=expires_at,
+            metadata_json=metadata or {},
+        )
         self.db.add(row)
         self.db.commit()
         self.db.refresh(row)
         return row
 
-    def list_by_namespace(self, namespace: str) -> list[VectorMemoryModel]:
-        return self.db.query(VectorMemoryModel).filter(VectorMemoryModel.namespace == namespace).all()
+    def list_by_namespace(self, namespace: str, *, scope=None, memory_type=None) -> list[VectorMemoryModel]:
+        now = datetime.now(timezone.utc)
+        query = (
+            self.db.query(VectorMemoryModel)
+            .filter(VectorMemoryModel.namespace == namespace)
+            .filter(or_(VectorMemoryModel.expires_at.is_(None), VectorMemoryModel.expires_at > now))
+        )
+        if scope is not None:
+            query = query.filter(VectorMemoryModel.scope == scope)
+        if memory_type is not None:
+            query = query.filter(VectorMemoryModel.memory_type == memory_type)
+        return query.all()

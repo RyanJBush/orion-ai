@@ -9,6 +9,7 @@ from app.schemas.workflow import (
     ToolReliabilityMetric,
     WorkflowCreate,
     WorkflowMetrics,
+    WorkflowReplayRequest,
     WorkflowRun,
     WorkflowRunControlResponse,
     WorkflowRunInsight,
@@ -141,6 +142,21 @@ def cancel_workflow_run(run_id: int, db: Session = Depends(get_db)) -> WorkflowR
         pause_requested=run.pause_requested,
         cancel_requested=run.cancel_requested,
     )
+
+
+@router.post("/runs/{run_id}/replay", response_model=WorkflowRun)
+def replay_workflow_run(
+    run_id: int,
+    payload: WorkflowReplayRequest,
+    db: Session = Depends(get_db),
+) -> WorkflowRun:
+    try:
+        replay = WorkflowEngine(db).replay_run(run_id, from_step_id=payload.from_step_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    if not replay:
+        raise HTTPException(status_code=404, detail="Workflow run not found")
+    return replay
 
 
 @router.get("/metrics", response_model=WorkflowMetrics)

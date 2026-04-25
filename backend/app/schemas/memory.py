@@ -23,6 +23,7 @@ class VectorWriteRequest(BaseModel):
     memory_type: MemoryType = MemoryType.tool_result
     source_ref: str | None = None
     ttl_seconds: int | None = None
+    metadata: dict = Field(default_factory=dict)
 
 
 class MemorySearchRequest(BaseModel):

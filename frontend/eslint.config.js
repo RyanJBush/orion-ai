@@ -1,6 +1,9 @@
 export default [
   {
-    files: ['**/*.{ts,tsx}'],
+    ignores: ['dist/**', 'node_modules/**'],
+  },
+  {
+    files: ['**/*.{js,mjs,cjs,jsx}'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',

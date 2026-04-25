@@ -11,6 +11,9 @@ class ToolSchemaResponse(BaseModel):
     is_demo_tool: bool = False
     requires_approval: bool = False
     risk_level: str = "low"
+    estimated_cost_tier: str = "low"
+    supports_streaming: bool = False
+    idempotent: bool = True
 
 
 class ToolHealthResponse(BaseModel):
