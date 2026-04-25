@@ -1,7 +1,14 @@
 def test_vector_memory_write_and_search(client):
     write = client.post(
         "/api/v1/memory/vector/write",
-        json={"namespace": "n1", "text": "agent workflow task", "scope": "short_term", "memory_type": "tool_result"},
+        json={
+            "namespace": "n1",
+            "text": "agent workflow task",
+            "scope": "short_term",
+            "memory_type": "tool_result",
+            "source_ref": "run:1:step:1",
+            "metadata": {"step_id": "step-1"},
+        },
     )
     assert write.status_code == 200
 
@@ -10,6 +17,41 @@ def test_vector_memory_write_and_search(client):
     results = search.json()
     assert len(results) == 1
     assert results[0]["score"] >= 0
+    assert results[0]["scope"] == "short_term"
+    assert results[0]["memory_type"] == "tool_result"
+
+
+def test_vector_memory_search_filters_scope_and_type(client):
+    alpha = client.post(
+        "/api/v1/memory/vector/write",
+        json={
+            "namespace": "n2",
+            "text": "workflow memory alpha",
+            "scope": "short_term",
+            "memory_type": "tool_result",
+        },
+    )
+    beta = client.post(
+        "/api/v1/memory/vector/write",
+        json={
+            "namespace": "n2",
+            "text": "workflow memory beta",
+            "scope": "long_term",
+            "memory_type": "fact",
+        },
+    )
+    assert alpha.status_code == 200
+    assert beta.status_code == 200
+
+    filtered = client.post(
+        "/api/v1/memory/vector/search",
+        json={"namespace": "n2", "query": "workflow", "scope": "long_term", "memory_type": "fact"},
+    )
+    assert filtered.status_code == 200
+    rows = filtered.json()
+    assert len(rows) == 1
+    assert rows[0]["scope"] == "long_term"
+    assert rows[0]["memory_type"] == "fact"
 
 
 def test_basic_memory_correction_and_summary(client):
