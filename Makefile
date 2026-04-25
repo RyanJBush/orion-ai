@@ -1,4 +1,5 @@
 .PHONY: setup install install-backend install-frontend dev dev-backend dev-frontend test lint demo-seed up down
+.PHONY: setup install install-backend install-frontend dev dev-backend dev-frontend test lint up down
 
 setup: install
 
