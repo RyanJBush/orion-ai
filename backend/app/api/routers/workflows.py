@@ -48,6 +48,11 @@ def create_workflow_template(payload: WorkflowTemplateCreate, db: Session = Depe
     return WorkflowTemplateService(db).create_template(payload)
 
 
+@router.post("/templates/seed-demo", response_model=list[WorkflowTemplate])
+def seed_demo_workflow_templates(db: Session = Depends(get_db)) -> list[WorkflowTemplate]:
+    return WorkflowTemplateService(db).seed_demo_templates()
+
+
 @router.post("/templates/{template_id}/run", response_model=WorkflowRun)
 def run_workflow_template(template_id: int, db: Session = Depends(get_db)) -> WorkflowRun:
     run = WorkflowTemplateService(db).run_template(template_id)

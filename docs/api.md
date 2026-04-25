@@ -21,6 +21,7 @@ Base path: `/api/v1`
 - `POST /workflows`
 - `GET /workflows/templates`
 - `POST /workflows/templates`
+- `POST /workflows/templates/seed-demo`
 - `POST /workflows/templates/{template_id}/run`
 - `GET /workflows/runs/{run_id}`
 - `GET /workflows/runs/{run_id}/timeline`

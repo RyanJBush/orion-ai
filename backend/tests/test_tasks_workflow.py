@@ -119,6 +119,21 @@ def test_workflow_template_create_list_and_run(client):
     assert run.json()["status"] in {"completed", "failed"}
 
 
+def test_seed_demo_templates_is_idempotent(client):
+    first = client.post("/api/v1/workflows/templates/seed-demo")
+    assert first.status_code == 200
+    assert len(first.json()) >= 1
+
+    second = client.post("/api/v1/workflows/templates/seed-demo")
+    assert second.status_code == 200
+    assert second.json() == []
+
+    listed = client.get("/api/v1/workflows/templates")
+    assert listed.status_code == 200
+    demo_templates = [row for row in listed.json() if row["is_demo"]]
+    assert len(demo_templates) >= 3
+
+
 def test_workflow_replay_from_failed_step(client):
     initial = client.post(
         "/api/v1/tasks/submit",

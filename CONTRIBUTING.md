@@ -6,6 +6,7 @@
 2. Run `make dev-backend` for the API service.
 3. In another terminal, run `make dev-frontend` for the UI.
 4. Run `make test && make lint` before opening updates.
+5. Optional demo-prep check: seed templates with `POST /api/v1/workflows/templates/seed-demo` and run one template end-to-end.
 
 ## Environment configuration
 

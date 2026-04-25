@@ -64,9 +64,34 @@ make lint
 - `GET /api/v1/workflows/runs/{run_id}/timeline`
 - `GET /api/v1/workflows/runs/{run_id}/metrics`
 - `POST /api/v1/workflows/runs/{run_id}/replay`
+- `POST /api/v1/workflows/templates/seed-demo`
 - `POST /api/v1/approvals`
 - `POST /api/v1/memory/basic/write`
 - `POST /api/v1/memory/vector/write`
 - `POST /api/v1/memory/vector/search`
 
 See `docs/api.md` for the full list.
+
+## Demo script (portfolio-ready flow)
+
+1. Start services with `make up` (or run backend/frontend locally via dev commands).
+2. Seed templates:
+   ```bash
+   make demo-seed
+   ```
+3. List templates and capture one `id`:
+   ```bash
+   curl http://localhost:8000/api/v1/workflows/templates
+   ```
+4. Execute template run:
+   ```bash
+   curl -X POST http://localhost:8000/api/v1/workflows/templates/<id>/run
+   ```
+5. Inspect run timeline, metrics, and insights:
+   ```bash
+   curl http://localhost:8000/api/v1/workflows/runs/<run_id>/timeline
+   curl http://localhost:8000/api/v1/workflows/runs/<run_id>/metrics
+   curl http://localhost:8000/api/v1/workflows/runs/<run_id>/insights
+   ```
+
+Use the **Workflow Execution** page in the frontend to load the same run ID and demonstrate pause/resume/cancel/replay controls with live telemetry.

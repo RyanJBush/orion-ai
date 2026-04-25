@@ -1,3 +1,4 @@
+.PHONY: setup install install-backend install-frontend dev dev-backend dev-frontend test lint demo-seed up down
 .PHONY: setup install install-backend install-frontend dev dev-backend dev-frontend test lint up down
 
 setup: install
@@ -24,6 +25,9 @@ test:
 lint:
 	cd backend && ruff check app
 	cd frontend && npm run lint
+
+demo-seed:
+	curl -X POST http://localhost:8000/api/v1/workflows/templates/seed-demo
 
 up:
 	docker compose up --build
