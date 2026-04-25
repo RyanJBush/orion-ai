@@ -1,4 +1,6 @@
-.PHONY: install install-backend install-frontend dev dev-backend dev-frontend test lint up down
+.PHONY: setup install install-backend install-frontend dev dev-backend dev-frontend test lint up down
+
+setup: install
 
 install: install-backend install-frontend
 
@@ -17,7 +19,7 @@ dev-frontend:
 	cd frontend && npm run dev
 
 test:
-	cd backend && pytest
+	cd backend && PYTHONPATH=. pytest
 
 lint:
 	cd backend && ruff check app
