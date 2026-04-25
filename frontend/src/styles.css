@@ -245,6 +245,26 @@ button:disabled {
   align-items: center;
 }
 
+.control-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.step-item-graph {
+  align-items: flex-start;
+}
+
+.error-text {
+  color: #b91c1c;
+  font-size: 0.9rem;
+}
+
+.insight-panel ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1rem;
+}
+
 .agent-table {
   width: 100%;
   border-collapse: collapse;
