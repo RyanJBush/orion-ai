@@ -29,6 +29,7 @@ Base path: `/api/v1`
 - `POST /workflows/runs/{run_id}/pause`
 - `POST /workflows/runs/{run_id}/resume`
 - `POST /workflows/runs/{run_id}/cancel`
+- `POST /workflows/runs/{run_id}/replay`
 - `GET /workflows/metrics`
 
 ## Agents

@@ -63,6 +63,7 @@ make lint
 - `GET /api/v1/workflows/runs/{run_id}`
 - `GET /api/v1/workflows/runs/{run_id}/timeline`
 - `GET /api/v1/workflows/runs/{run_id}/metrics`
+- `POST /api/v1/workflows/runs/{run_id}/replay`
 - `POST /api/v1/approvals`
 - `POST /api/v1/memory/basic/write`
 - `POST /api/v1/memory/vector/write`

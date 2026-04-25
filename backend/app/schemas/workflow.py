@@ -57,6 +57,10 @@ class WorkflowRunControlResponse(BaseModel):
         from_attributes = True
 
 
+class WorkflowReplayRequest(BaseModel):
+    from_step_id: str | None = None
+
+
 class WorkflowTimelineEvent(BaseModel):
     id: int
     run_id: int
