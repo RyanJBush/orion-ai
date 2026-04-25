@@ -21,6 +21,9 @@ class ToolRegistry:
                 timeout_seconds=2.0,
                 allowed_workers=["worker-general", "worker-math"],
                 is_demo_tool=True,
+                estimated_cost_tier="low",
+                supports_streaming=False,
+                idempotent=True,
             ),
         )
         self.register(
@@ -33,6 +36,9 @@ class ToolRegistry:
                 timeout_seconds=2.0,
                 allowed_workers=["worker-math"],
                 is_demo_tool=True,
+                estimated_cost_tier="low",
+                supports_streaming=False,
+                idempotent=True,
             ),
         )
         self.register(
@@ -45,6 +51,9 @@ class ToolRegistry:
                 timeout_seconds=0.05,
                 allowed_workers=["worker-general"],
                 is_demo_tool=True,
+                estimated_cost_tier="low",
+                supports_streaming=False,
+                idempotent=True,
             ),
         )
         self.register(
@@ -57,6 +66,9 @@ class ToolRegistry:
                 timeout_seconds=1.0,
                 allowed_workers=["worker-general"],
                 is_demo_tool=True,
+                estimated_cost_tier="medium",
+                supports_streaming=False,
+                idempotent=False,
             ),
         )
         self.register(
@@ -71,6 +83,9 @@ class ToolRegistry:
                 is_demo_tool=True,
                 requires_approval=True,
                 risk_level="high",
+                estimated_cost_tier="medium",
+                supports_streaming=False,
+                idempotent=True,
             ),
         )
 

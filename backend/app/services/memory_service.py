@@ -72,27 +72,41 @@ class MemoryService:
 
     def write_vector(self, payload: VectorWriteRequest) -> MemoryWriteResponse:
         embedding = self._embed(payload.text)
-        row = self.vector_repo.add(payload.namespace, payload.text, embedding)
+        expires_at = self._resolve_expiry(payload.scope, payload.ttl_seconds)
+        row = self.vector_repo.add(
+            payload.namespace,
+            payload.text,
+            embedding,
+            scope=payload.scope,
+            memory_type=payload.memory_type,
+            source_ref=payload.source_ref,
+            expires_at=expires_at,
+            metadata=payload.metadata,
+        )
         logger.info("memory.vector_written", extra={"memory_id": row.id, "namespace": row.namespace})
         return MemoryWriteResponse(
             id=row.id,
             namespace=row.namespace,
             key=None,
-            scope=payload.scope,
-            memory_type=payload.memory_type,
-            expires_at=self._resolve_expiry(payload.scope, payload.ttl_seconds),
+            scope=row.scope,
+            memory_type=row.memory_type,
+            expires_at=row.expires_at,
         )
 
     def search_vector(self, payload: MemorySearchRequest) -> list[MemoryResult]:
         query_embedding = self._embed(payload.query)
-        rows = self.vector_repo.list_by_namespace(payload.namespace)
+        rows = self.vector_repo.list_by_namespace(
+            payload.namespace,
+            scope=payload.scope,
+            memory_type=payload.memory_type,
+        )
         scored = [
             MemoryResult(
                 id=row.id,
                 text=row.text,
                 score=self._cosine(query_embedding, row.embedding),
-                scope=payload.scope,
-                memory_type=payload.memory_type,
+                scope=row.scope,
+                memory_type=row.memory_type,
             )
             for row in rows
         ]

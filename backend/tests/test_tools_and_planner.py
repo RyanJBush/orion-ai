@@ -46,9 +46,12 @@ def test_tool_registry_endpoint_exposes_permissions_and_timeout(client):
     math = next(tool for tool in tools if tool["name"] == "math")
     assert math["allowed_workers"] == ["worker-math"]
     assert math["timeout_seconds"] > 0
+    assert math["estimated_cost_tier"] == "low"
+    assert math["idempotent"] is True
     sensitive = next(tool for tool in tools if tool["name"] == "sensitive_echo")
     assert sensitive["requires_approval"] is True
     assert sensitive["risk_level"] == "high"
+    assert sensitive["estimated_cost_tier"] == "medium"
 
 
 def test_math_tool_returns_message_when_no_numbers_present():

@@ -1,4 +1,14 @@
-export type Status = 'queued' | 'running' | 'completed' | 'failed'
+export type Status =
+  | 'pending'
+  | 'queued'
+  | 'planning'
+  | 'running'
+  | 'paused'
+  | 'blocked'
+  | 'retrying'
+  | 'completed'
+  | 'canceled'
+  | 'failed'
 
 export interface ExecutionStep {
   id: number

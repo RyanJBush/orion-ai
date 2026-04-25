@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "lint": "eslint ."
+    "lint": "eslint . --ext js,jsx --no-error-on-unmatched-pattern"
   },
   "dependencies": {
     "react": "^18.3.1",

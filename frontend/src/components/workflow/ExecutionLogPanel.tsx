@@ -1,21 +1,31 @@
-import type { ExecutionStep } from '../../types/workflow'
+import type { ApiTimelineEvent } from '../../services/api'
 
-export function ExecutionLogPanel({ steps }: { steps: ExecutionStep[] }) {
+interface ExecutionLogPanelProps {
+  events: ApiTimelineEvent[]
+}
+
+function getMetadata(event: ApiTimelineEvent): Record<string, unknown> {
+  return event.metadata ?? event.event_metadata ?? {}
+}
+
+export function ExecutionLogPanel({ events }: ExecutionLogPanelProps) {
   return (
     <div className="panel">
-      <h3>Execution Logs</h3>
+      <h3>Execution Timeline</h3>
       <div className="logs">
-        {steps.map((step) => (
-          <article key={step.id} className="log-item">
-            <p>
-              <strong>Step {step.id}:</strong> {step.log}
-            </p>
-            <small>
-              {step.startedAt}
-              {step.completedAt ? ` → ${step.completedAt}` : ''}
-            </small>
-          </article>
-        ))}
+        {events.map((event) => {
+          const metadata = getMetadata(event)
+          const metaPreview = Object.keys(metadata).length ? JSON.stringify(metadata) : null
+          return (
+            <article key={event.id} className="log-item">
+              <p>
+                <strong>{event.event_type}</strong> · {event.message}
+              </p>
+              {metaPreview ? <p className="muted">{metaPreview}</p> : null}
+              <small>{new Date(event.created_at).toLocaleString()}</small>
+            </article>
+          )
+        })}
       </div>
     </div>
   )

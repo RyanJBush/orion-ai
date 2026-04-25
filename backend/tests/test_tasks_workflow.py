@@ -117,3 +117,79 @@ def test_workflow_template_create_list_and_run(client):
     run = client.post(f"/api/v1/workflows/templates/{template_id}/run")
     assert run.status_code == 200
     assert run.json()["status"] in {"completed", "failed"}
+
+
+def test_seed_demo_templates_is_idempotent(client):
+    first = client.post("/api/v1/workflows/templates/seed-demo")
+    assert first.status_code == 200
+    assert len(first.json()) >= 1
+
+    second = client.post("/api/v1/workflows/templates/seed-demo")
+    assert second.status_code == 200
+    assert second.json() == []
+
+    listed = client.get("/api/v1/workflows/templates")
+    assert listed.status_code == 200
+    demo_templates = [row for row in listed.json() if row["is_demo"]]
+    assert len(demo_templates) >= 3
+
+
+def test_workflow_replay_from_failed_step(client):
+    initial = client.post(
+        "/api/v1/tasks/submit",
+        json={
+            "title": "Replay scenario",
+            "description": "please run sensitive operation requiring approval",
+            "workflow_name": "default",
+        },
+    )
+    assert initial.status_code == 200
+    initial_run = initial.json()
+    assert initial_run["status"] == "failed"
+    initial_timeline = client.get(f"/api/v1/workflows/runs/{initial_run['id']}/timeline")
+    assert initial_timeline.status_code == 200
+    failed_event = next(
+        (event for event in initial_timeline.json() if event["event_type"] == "step_failed"),
+        None,
+    )
+    assert failed_event is not None
+    event_metadata = failed_event.get("metadata") or failed_event.get("event_metadata") or {}
+    assert event_metadata["error_code"] == "ORION_TOOL_PERMISSION"
+
+    replay = client.post(
+        f"/api/v1/workflows/runs/{initial_run['id']}/replay",
+        json={"from_step_id": "step-1"},
+    )
+    assert replay.status_code == 200
+    replay_run = replay.json()
+    assert replay_run["id"] != initial_run["id"]
+    assert replay_run["task_id"] == initial_run["task_id"]
+    assert replay_run["status"] == "failed"
+
+    timeline = client.get(f"/api/v1/workflows/runs/{replay_run['id']}/timeline")
+    assert timeline.status_code == 200
+    events = timeline.json()
+    replay_event = next((event for event in events if event["event_type"] == "workflow_replayed"), None)
+    assert replay_event is not None
+    replay_metadata = replay_event.get("metadata") or replay_event.get("event_metadata") or {}
+    assert replay_metadata["source_run_id"] == initial_run["id"]
+
+
+def test_workflow_replay_rejects_unknown_step(client):
+    initial = client.post(
+        "/api/v1/tasks/submit",
+        json={
+            "title": "Replay validation",
+            "description": "echo one. then echo two",
+            "workflow_name": "default",
+        },
+    )
+    assert initial.status_code == 200
+    run_id = initial.json()["id"]
+
+    replay = client.post(
+        f"/api/v1/workflows/runs/{run_id}/replay",
+        json={"from_step_id": "step-999"},
+    )
+    assert replay.status_code == 422
+    assert "from_step_id" in replay.json()["detail"]
