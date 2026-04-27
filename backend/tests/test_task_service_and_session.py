@@ -22,6 +22,17 @@ def test_task_service_set_status_returns_none_for_missing_task(db_session):
     assert updated is None
 
 
+def test_task_service_set_status_updates_existing_task(db_session):
+    service = TaskService(db_session)
+    created = service.create_task(TaskCreate(title="Status change", description="d1", priority=TaskPriority.normal))
+
+    updated = service.set_status(created.id, TaskStatus.completed)
+
+    assert updated is not None
+    assert updated.id == created.id
+    assert updated.status == TaskStatus.completed
+
+
 def test_get_db_closes_session_after_generator_finishes(monkeypatch):
     class DummySession:
         def __init__(self) -> None:
