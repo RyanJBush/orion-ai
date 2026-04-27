@@ -88,10 +88,10 @@ def test_dispatch_next_returns_429_when_quota_exceeded(client, monkeypatch):
     queued = client.post("/api/v1/tasks/enqueue", json={"title": "Queued", "description": "echo this"})
     assert queued.status_code == 200
 
-    def _raise_quota(*args, **kwargs):
+    def _raise_quota_error(*args, **kwargs):
         raise QuotaExceededError("Daily run quota exceeded for actor 'actor-1'")
 
-    monkeypatch.setattr("app.api.routers.tasks.UsageService.consume_run", _raise_quota)
+    monkeypatch.setattr("app.api.routers.tasks.UsageService.consume_run", _raise_quota_error)
 
     response = client.post(
         "/api/v1/tasks/dispatch-next",
