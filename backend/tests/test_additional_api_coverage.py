@@ -1,4 +1,5 @@
 from app.models.common import StepStatus, TaskPriority, WorkflowRunStatus
+from app.services.usage_service import QuotaExceededError
 from app.repositories.task_repository import TaskRepository
 from app.repositories.workflow_repository import WorkflowRunRepository
 
@@ -64,10 +65,40 @@ def test_get_task_returns_404_for_missing_task(client):
     assert response.json()["detail"] == "Task not found"
 
 
+def test_list_tasks_endpoint_returns_created_tasks(client):
+    first = client.post("/api/v1/tasks", json={"title": "Coverage task 1", "description": "D1"})
+    second = client.post("/api/v1/tasks", json={"title": "Coverage task 2", "description": "D2"})
+    assert first.status_code == 200
+    assert second.status_code == 200
+
+    listed = client.get("/api/v1/tasks")
+    assert listed.status_code == 200
+    returned_ids = {row["id"] for row in listed.json()}
+    assert first.json()["id"] in returned_ids
+    assert second.json()["id"] in returned_ids
+
+
 def test_dispatch_next_returns_404_when_queue_empty(client):
     response = client.post("/api/v1/tasks/dispatch-next", json={"workflow_name": "default"})
     assert response.status_code == 404
     assert response.json()["detail"] == "No queued tasks available"
+
+
+def test_dispatch_next_returns_429_when_quota_exceeded(client, monkeypatch):
+    queued = client.post("/api/v1/tasks/enqueue", json={"title": "Queued", "description": "echo this"})
+    assert queued.status_code == 200
+
+    def _raise_quota_error(*args, **kwargs):
+        raise QuotaExceededError("Daily run quota exceeded for actor 'actor-1'")
+
+    monkeypatch.setattr("app.api.routers.tasks.UsageService.consume_run", _raise_quota_error)
+
+    response = client.post(
+        "/api/v1/tasks/dispatch-next",
+        json={"workflow_name": "default", "actor_id": "actor-1"},
+    )
+    assert response.status_code == 429
+    assert response.json()["detail"] == "Daily run quota exceeded for actor 'actor-1'"
 
 
 def test_approval_decision_rejects_pending_status(client):
