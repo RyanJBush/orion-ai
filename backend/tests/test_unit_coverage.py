@@ -15,8 +15,7 @@ Comprehensive unit tests covering areas previously missing from the test suite:
 """
 
 import logging
-from datetime import UTC, datetime, timedelta, timezone
-from unittest.mock import MagicMock
+from datetime import UTC, datetime, timedelta
 
 import jwt
 import pytest
@@ -39,6 +38,7 @@ from app.services.approval_service import ToolApprovalService
 from app.services.audit_service import AuditService
 from app.services.memory_service import MemoryService
 from app.services.orchestration_service import build_langgraph_stub
+from app.schemas.usage import UsageQuotaSetRequest
 from app.services.usage_service import QuotaExceededError, UsageService
 from app.services.workflow_engine import WorkflowEngine
 from app.services.workflow_insight_service import WorkflowInsightService
@@ -219,7 +219,7 @@ def test_resolve_expiry_long_term_returns_none():
 
 
 def test_resolve_expiry_short_term_returns_future_datetime():
-    before = datetime.now(timezone.utc)
+    before = datetime.now(UTC)
     result = MemoryService._resolve_expiry(MemoryScope.short_term, None)
     assert result is not None
     assert result > before
@@ -227,15 +227,15 @@ def test_resolve_expiry_short_term_returns_future_datetime():
 
 def test_resolve_expiry_short_term_respects_custom_ttl():
     result = MemoryService._resolve_expiry(MemoryScope.short_term, 3600)
-    expected_min = datetime.now(timezone.utc) + timedelta(seconds=3590)
-    expected_max = datetime.now(timezone.utc) + timedelta(seconds=3610)
+    expected_min = datetime.now(UTC) + timedelta(seconds=3590)
+    expected_max = datetime.now(UTC) + timedelta(seconds=3610)
     assert expected_min < result < expected_max
 
 
 def test_resolve_expiry_clamps_ttl_to_minimum_of_one_second():
     result = MemoryService._resolve_expiry(MemoryScope.short_term, 0)
     assert result is not None
-    assert result > datetime.now(timezone.utc)
+    assert result > datetime.now(UTC)
 
 
 # ---------------------------------------------------------------------------
@@ -564,11 +564,7 @@ def test_usage_service_consume_run_increments_used_runs(db_session):
 
 def test_usage_service_consume_run_raises_when_quota_exceeded(db_session):
     service = UsageService(db_session)
-    service.set_quota(
-        __import__("app.schemas.usage", fromlist=["UsageQuotaSetRequest"]).UsageQuotaSetRequest(
-            actor_id="limited-actor", max_runs=1
-        )
-    )
+    service.set_quota(UsageQuotaSetRequest(actor_id="limited-actor", max_runs=1))
     service.consume_run("limited-actor")
     with pytest.raises(QuotaExceededError):
         service.consume_run("limited-actor")
@@ -576,11 +572,7 @@ def test_usage_service_consume_run_raises_when_quota_exceeded(db_session):
 
 def test_usage_service_remaining_runs_never_negative(db_session):
     service = UsageService(db_session)
-    service.set_quota(
-        __import__("app.schemas.usage", fromlist=["UsageQuotaSetRequest"]).UsageQuotaSetRequest(
-            actor_id="zero-actor", max_runs=1
-        )
-    )
+    service.set_quota(UsageQuotaSetRequest(actor_id="zero-actor", max_runs=1))
     service.consume_run("zero-actor")
     quota = service.get_quota("zero-actor")
     assert quota.remaining_runs == 0
