@@ -1,4 +1,4 @@
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import jwt
 from fastapi import Depends, HTTPException, status
@@ -10,7 +10,7 @@ security = HTTPBearer(auto_error=False)
 
 
 def create_access_token(subject: str, role: str, expires_minutes: int = 60) -> str:
-    now = datetime.now(tz=UTC)
+    now = datetime.now(tz=timezone.utc)
     payload = {
         "sub": subject,
         "role": role,

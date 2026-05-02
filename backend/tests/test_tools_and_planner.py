@@ -1,6 +1,8 @@
 import pytest
 
 from app.agents.planner_agent import planner_agent
+from app.agents.contracts import AgentRequest
+from app.agents.reviewer_agent import reviewer_agent
 from app.agents.worker_agent import WorkerAgent
 from app.tools.base import Tool, ToolPermissionError, ToolRuntimeError, ToolSchema, ToolTimeoutError
 from app.tools.default_tools import MathTool, SensitiveEchoTool
@@ -122,3 +124,33 @@ def test_registry_run_wraps_unexpected_exceptions():
 
     with pytest.raises(ToolRuntimeError, match="tool 'exploding' failed"):
         registry.run("exploding", worker_name="worker-general", input_text="x")
+
+
+def test_planner_structured_plan_response():
+    response = planner_agent.plan(
+        AgentRequest(workflow_id="wf-1", step_id=None, goal="compute 2+2", context={"description": "compute 2+2"})
+    )
+    payload = response.to_dict()
+    assert payload["role"] == "planner"
+    assert payload["output"]["step_count"] >= 1
+    assert payload["reasoning_trace"]["summary"]
+
+
+def test_reviewer_returns_structured_review():
+    response = reviewer_agent.review(
+        AgentRequest(workflow_id="wf-1", step_id="step-1", goal="hello", context={"candidate_output": "hello world"})
+    )
+    payload = response.to_dict()
+    assert payload["role"] == "reviewer"
+    assert payload["output"]["approved"] is True
+    assert payload["reasoning_trace"]["tags"]
+
+
+def test_executor_structured_run_response():
+    worker = WorkerAgent(name="worker-general")
+    response = worker.run(
+        AgentRequest(workflow_id="wf-1", step_id="step-1", goal="hello", context={"action": "echo"})
+    )
+    payload = response.to_dict()
+    assert payload["role"] == "executor"
+    assert payload["output"]["result"] == "hello"

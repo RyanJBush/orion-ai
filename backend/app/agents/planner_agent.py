@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from app.agents.contracts import AgentRequest, AgentResponse, ReasoningTrace
+
 
 @dataclass
 class RetryPolicy:
@@ -24,6 +26,7 @@ class PlannedStep:
 
 class PlannerAgent:
     name = "planner"
+    role = "planner"
 
     def decompose(self, task_title: str, description: str | None) -> list[PlannedStep]:
         source = description or task_title
@@ -68,6 +71,38 @@ class PlannerAgent:
             )
             previous_step_id = step_id
         return steps
+
+    def plan(self, request: AgentRequest) -> AgentResponse:
+        steps = self.decompose(task_title=request.goal, description=request.context.get("description"))
+        return AgentResponse(
+            agent=self.name,
+            role=self.role,
+            status="completed",
+            output={
+                "workflow_goal": request.goal,
+                "step_count": len(steps),
+                "steps": [
+                    {
+                        "id": step.id,
+                        "order": step.order,
+                        "owner": step.owner,
+                        "action": step.action,
+                        "instruction": step.instruction,
+                        "dependencies": step.dependencies,
+                        "retry": {
+                            "max_retries": step.retry_policy.max_retries,
+                            "backoff_seconds": step.retry_policy.backoff_seconds,
+                        },
+                    }
+                    for step in steps
+                ],
+            },
+            reasoning_trace=ReasoningTrace(
+                summary="Task decomposed into executable steps grouped by tool/action type.",
+                confidence=0.81,
+                tags=["decomposition", "routing", "retry-policy"],
+            ),
+        )
 
 
 planner_agent = PlannerAgent()
