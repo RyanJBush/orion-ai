@@ -15,7 +15,7 @@ Comprehensive unit tests covering areas previously missing from the test suite:
 """
 
 import logging
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import jwt
 import pytest
@@ -61,7 +61,7 @@ def test_create_access_token_encodes_subject_and_role():
 def test_create_access_token_has_future_expiry():
     token = create_access_token("u1", "viewer", expires_minutes=30)
     payload = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
-    assert payload["exp"] > datetime.now(tz=UTC).timestamp()
+    assert payload["exp"] > datetime.now(tz=timezone.utc).timestamp()
 
 
 def test_get_current_user_returns_user_for_valid_token():
@@ -91,8 +91,8 @@ def test_get_current_user_raises_401_for_expired_token():
     expired_payload = {
         "sub": "expired-user",
         "role": "viewer",
-        "iat": datetime.now(tz=UTC) - timedelta(minutes=120),
-        "exp": datetime.now(tz=UTC) - timedelta(minutes=60),
+        "iat": datetime.now(tz=timezone.utc) - timedelta(minutes=120),
+        "exp": datetime.now(tz=timezone.utc) - timedelta(minutes=60),
     }
     token = jwt.encode(expired_payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
     creds = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
@@ -219,7 +219,7 @@ def test_resolve_expiry_long_term_returns_none():
 
 
 def test_resolve_expiry_short_term_returns_future_datetime():
-    before = datetime.now(UTC)
+    before = datetime.now(timezone.utc)
     result = MemoryService._resolve_expiry(MemoryScope.short_term, None)
     assert result is not None
     assert result > before
@@ -227,15 +227,15 @@ def test_resolve_expiry_short_term_returns_future_datetime():
 
 def test_resolve_expiry_short_term_respects_custom_ttl():
     result = MemoryService._resolve_expiry(MemoryScope.short_term, 3600)
-    expected_min = datetime.now(UTC) + timedelta(seconds=3590)
-    expected_max = datetime.now(UTC) + timedelta(seconds=3610)
+    expected_min = datetime.now(timezone.utc) + timedelta(seconds=3590)
+    expected_max = datetime.now(timezone.utc) + timedelta(seconds=3610)
     assert expected_min < result < expected_max
 
 
 def test_resolve_expiry_clamps_ttl_to_minimum_of_one_second():
     result = MemoryService._resolve_expiry(MemoryScope.short_term, 0)
     assert result is not None
-    assert result > datetime.now(UTC)
+    assert result > datetime.now(timezone.utc)
 
 
 # ---------------------------------------------------------------------------
