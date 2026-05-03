@@ -39,6 +39,30 @@ class WorkflowTemplateService:
     def seed_demo_templates(self) -> list[WorkflowTemplate]:
         demo_specs = [
             {
+                "name": "demo-research-workflow",
+                "description": "Research workflow with discovery, synthesis, and recommendation steps.",
+                "task_title": "Research AI observability options",
+                "task_description": "collect vendor landscape. then compare pricing 10 20 30. then draft recommendation",
+                "workflow_name": "default",
+                "tags": ["demo", "research"],
+            },
+            {
+                "name": "demo-analysis-workflow",
+                "description": "Analysis workflow with calculations and summary generation.",
+                "task_title": "Analyze incident trends",
+                "task_description": "compute incident totals 14 7 9. then summarize trend and risks",
+                "workflow_name": "default",
+                "tags": ["demo", "analysis"],
+            },
+            {
+                "name": "demo-multi-step-reasoning",
+                "description": "Multi-step reasoning workflow that chains dependent steps.",
+                "task_title": "Reason through rollout plan",
+                "task_description": "define goals. then identify blockers. then propose phased rollout",
+                "workflow_name": "default",
+                "tags": ["demo", "reasoning"],
+            },
+            {
                 "name": "demo-kpi-report",
                 "description": "End-to-end KPI report workflow with data extraction and calculations.",
                 "task_title": "Generate KPI report",

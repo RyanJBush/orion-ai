@@ -95,3 +95,12 @@ See `docs/api.md` for the full list.
    ```
 
 Use the **Workflow Execution** page in the frontend to load the same run ID and demonstrate pause/resume/cancel/replay controls with live telemetry.
+
+## Demo workflows
+
+Seed and run production-like demo scenarios:
+
+- `POST /api/v1/workflows/templates/seed-demo` to install research, analysis, and multi-step reasoning templates.
+- `POST /api/v1/workflows/templates/{template_id}/run` to execute one-click demo runs.
+- Use Workflow Execution View in frontend to inspect graph, timeline, and per-step detail panel.
+
