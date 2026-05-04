@@ -339,6 +339,33 @@ class WorkflowEngine:
                         outcome.success = False
                         outcome.last_error = "reviewer rejected step output"
                         outcome.failure_class = "runtime"
+                review = reviewer_agent.review(
+                    request=AgentRequest(
+                        workflow_id=str(run.id),
+                        step_id=step.step_id,
+                        goal=step.input_text,
+                        context={
+                            "candidate_output": outcome.output_text,
+                            "criteria": [step.completion_criteria, step.expected_output],
+                        },
+                    )
+                )
+                review_output = review.output
+                self._log_event(
+                    run_id=run.id,
+                    step_pk_id=step.id,
+                    event_type="step_reviewed",
+                    message=f"Step {step.step_id} reviewed by reviewer agent.",
+                    metadata={
+                        "approved": review_output.get("approved", False),
+                        "score": review_output.get("score", 0),
+                        "reasoning": review.reasoning_trace.summary,
+                    },
+                )
+                if not review_output.get("approved", False):
+                    outcome.success = False
+                    outcome.last_error = "reviewer rejected step output"
+                    outcome.failure_class = "runtime"
 
                 if outcome.success:
                     self.run_repo.update_step(
