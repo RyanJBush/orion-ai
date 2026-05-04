@@ -27,6 +27,7 @@ export function WorkflowExecutionPage() {
   const [timeline, setTimeline] = useState<ApiTimelineEvent[]>([])
   const [metrics, setMetrics] = useState<ApiRunMetrics | null>(null)
   const [insight, setInsight] = useState<ApiRunInsight | null>(null)
+  const [selectedStepId, setSelectedStepId] = useState<number | null>(null)
 
   const runId = useMemo(() => Number.parseInt(runIdInput, 10), [runIdInput])
 
@@ -49,6 +50,7 @@ export function WorkflowExecutionPage() {
       setTimeline(timelineData)
       setMetrics(metricsData)
       setInsight(insightData)
+      setSelectedStepId(runData.steps[0]?.id ?? null)
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Unable to load workflow run.')
     } finally {
@@ -160,8 +162,8 @@ export function WorkflowExecutionPage() {
           ) : null}
 
           <div className="two-column">
-            <WorkflowSteps steps={run.steps} />
-            <ExecutionLogPanel events={timeline} />
+            <WorkflowSteps steps={run.steps} selectedStepId={selectedStepId} onSelectStep={setSelectedStepId} />
+            <ExecutionLogPanel events={timeline} selectedStep={run.steps.find((step) => step.id === selectedStepId) ?? null} />
           </div>
         </>
       ) : (

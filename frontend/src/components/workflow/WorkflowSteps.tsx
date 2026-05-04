@@ -1,33 +1,33 @@
+import { useMemo } from 'react'
 import { StatusBadge } from '../StatusBadge'
 import type { ApiExecutionStep } from '../../services/api'
 
 interface WorkflowStepsProps {
   steps: ApiExecutionStep[]
+  selectedStepId: number | null
+  onSelectStep: (stepId: number) => void
 }
 
-export function WorkflowSteps({ steps }: WorkflowStepsProps) {
+export function WorkflowSteps({ steps, selectedStepId, onSelectStep }: WorkflowStepsProps) {
+  const sorted = useMemo(() => [...steps].sort((a, b) => a.step_order - b.step_order), [steps])
+
   return (
     <div className="panel">
       <h3>Workflow Graph</h3>
-      <p className="muted">Dependency-aware step view with execution status and retry signals.</p>
+      <p className="muted">Nodes are execution steps, arrows represent dependencies.</p>
       <ul className="step-list">
-        {[...steps]
-          .sort((a, b) => a.step_order - b.step_order)
-          .map((step) => (
-            <li key={step.id} className="step-item step-item-graph">
+        {sorted.map((step) => (
+          <li key={step.id} className={`step-item step-item-graph ${selectedStepId === step.id ? 'selected' : ''}`}>
+            <button type="button" className="step-select" onClick={() => onSelectStep(step.id)}>
               <div>
-                <strong>
-                  {step.step_id} · {step.action}
-                </strong>
+                <strong>{step.step_id} · {step.action}</strong>
                 <p className="muted">Agent: {step.worker_name}</p>
-                <p className="muted">Depends on: {step.dependencies.length ? step.dependencies.join(', ') : 'none'}</p>
-                <p className="muted">
-                  Attempts: {step.attempt_count} · Latency: {step.latency_ms ?? '—'}ms
-                </p>
+                <p className="muted">Depends on: {step.dependencies.length ? step.dependencies.join(' → ') : 'start'}</p>
               </div>
               <StatusBadge status={step.status} />
-            </li>
-          ))}
+            </button>
+          </li>
+        ))}
       </ul>
     </div>
   )
