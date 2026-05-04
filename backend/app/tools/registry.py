@@ -2,7 +2,16 @@ from concurrent.futures import ThreadPoolExecutor, TimeoutError
 import logging
 
 from app.tools.base import Tool, ToolPermissionError, ToolRuntimeError, ToolSchema, ToolTimeoutError
-from app.tools.default_tools import EchoTool, FlakyTool, MathTool, SensitiveEchoTool, SlowEchoTool
+from app.tools.default_tools import (
+    CodeRunTool,
+    EchoTool,
+    FlakyTool,
+    HttpApiTool,
+    MathTool,
+    SensitiveEchoTool,
+    SlowEchoTool,
+    WebSearchTool,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +93,51 @@ class ToolRegistry:
                 requires_approval=True,
                 risk_level="high",
                 estimated_cost_tier="medium",
+                supports_streaming=False,
+                idempotent=True,
+            ),
+        )
+        self.register(
+            WebSearchTool(),
+            ToolSchema(
+                name="web_search",
+                description="Search the web and return structured results.",
+                input_schema={"input_text": "string"},
+                output_schema={"results": "list[dict]"},
+                timeout_seconds=5.0,
+                allowed_workers=["worker-general", "worker-research"],
+                is_demo_tool=False,
+                estimated_cost_tier="low",
+                supports_streaming=False,
+                idempotent=True,
+            ),
+        )
+        self.register(
+            HttpApiTool(),
+            ToolSchema(
+                name="http_api",
+                description="Perform an HTTP GET request and return the JSON response.",
+                input_schema={"input_text": "url"},
+                output_schema={"response": "dict"},
+                timeout_seconds=10.0,
+                allowed_workers=["worker-general", "worker-research"],
+                is_demo_tool=False,
+                estimated_cost_tier="low",
+                supports_streaming=False,
+                idempotent=True,
+            ),
+        )
+        self.register(
+            CodeRunTool(),
+            ToolSchema(
+                name="code_run",
+                description="Safely evaluate a numeric arithmetic expression.",
+                input_schema={"input_text": "expression"},
+                output_schema={"result": "number"},
+                timeout_seconds=3.0,
+                allowed_workers=["worker-general", "worker-math"],
+                is_demo_tool=False,
+                estimated_cost_tier="low",
                 supports_streaming=False,
                 idempotent=True,
             ),
