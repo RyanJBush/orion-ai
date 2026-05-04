@@ -311,6 +311,34 @@ class WorkflowEngine:
                     self.run_repo.set_run_status(run, WorkflowRunStatus.running)
 
 
+                if outcome.success:
+                    review = reviewer_agent.review(
+                        request=AgentRequest(
+                            workflow_id=str(run.id),
+                            step_id=step.step_id,
+                            goal=step.input_text,
+                            context={
+                                "candidate_output": outcome.output_text,
+                                "criteria": [step.completion_criteria, step.expected_output],
+                            },
+                        )
+                    )
+                    review_output = review.output
+                    self._log_event(
+                        run_id=run.id,
+                        step_pk_id=step.id,
+                        event_type="step_reviewed",
+                        message=f"Step {step.step_id} reviewed by reviewer agent.",
+                        metadata={
+                            "approved": review_output.get("approved", False),
+                            "score": review_output.get("score", 0),
+                            "reasoning": review.reasoning_trace.summary,
+                        },
+                    )
+                    if not review_output.get("approved", False):
+                        outcome.success = False
+                        outcome.last_error = "reviewer rejected step output"
+                        outcome.failure_class = "runtime"
                 review = reviewer_agent.review(
                     request=AgentRequest(
                         workflow_id=str(run.id),
@@ -380,6 +408,8 @@ class WorkflowEngine:
                             "attempts": outcome.attempts,
                             "latency_ms": outcome.latency_ms,
                             "used_fallback": outcome.used_fallback,
+                            "tool": step.action,
+                            "worker": step.worker_name,
                         },
                     )
                 else:
@@ -404,6 +434,8 @@ class WorkflowEngine:
                             "error": outcome.last_error,
                             "error_code": error_code,
                             "failure_class": outcome.failure_class,
+                            "tool": step.action,
+                            "worker": step.worker_name,
                         },
                     )
                     failed = True

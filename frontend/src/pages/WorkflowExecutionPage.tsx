@@ -50,6 +50,7 @@ export function WorkflowExecutionPage() {
       setTimeline(timelineData)
       setMetrics(metricsData)
       setInsight(insightData)
+      setSelectedStepId(runData.steps[0]?.id ?? null)
       setSelectedStepId((prev) => prev ?? runData.steps[0]?.id ?? null)
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Unable to load workflow run.')
