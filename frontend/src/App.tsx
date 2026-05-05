@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppLayout } from './layout/AppLayout'
 import { AgentMonitorPage } from './pages/AgentMonitorPage'
 import { DashboardPage } from './pages/DashboardPage'
+import { DemoPage } from './pages/DemoPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { TasksPage } from './pages/TasksPage'
 import { WorkflowExecutionPage } from './pages/WorkflowExecutionPage'
@@ -15,6 +16,7 @@ export function App() {
         <Route path="/tasks" element={<TasksPage />} />
         <Route path="/execution" element={<WorkflowExecutionPage />} />
         <Route path="/agents" element={<AgentMonitorPage />} />
+        <Route path="/demo" element={<DemoPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
