@@ -37,12 +37,22 @@ class PlannerAgent:
         steps: list[PlannedStep] = []
         previous_step_id: str | None = None
         for idx, chunk in enumerate(chunks, start=1):
-            if any(token in chunk.lower() for token in ["sensitive", "approve", "approval"]):
+            chunk_lower = chunk.lower()
+            if any(token in chunk_lower for token in ["sensitive", "approve", "approval", "export"]):
                 action = "sensitive_echo"
                 worker = "worker-general"
-            elif "flaky" in chunk.lower():
+            elif "flaky" in chunk_lower or "integration" in chunk_lower:
                 action = "flaky"
                 worker = "worker-general"
+            elif any(token in chunk_lower for token in ["search", "discover", "find", "lookup", "research", "landscape", "vendor", "compare"]):
+                action = "search"
+                worker = "worker-general"
+            elif any(token in chunk_lower for token in ["http", "api", "fetch", "request", "call", "kpi", "incident", "health", "config"]):
+                action = "http_request"
+                worker = "worker-general"
+            elif any(token in chunk_lower for token in ["exec", "evaluate", "code", "run"]) and any(ch.isdigit() for ch in chunk):
+                action = "code_exec"
+                worker = "worker-math"
             elif any(ch.isdigit() for ch in chunk):
                 action = "math"
                 worker = "worker-math"
@@ -53,7 +63,7 @@ class PlannerAgent:
             step_id = f"step-{idx}"
             depends_on_previous = chunk.lower().startswith(("then ", "after ", "next "))
             dependencies = [previous_step_id] if depends_on_previous and previous_step_id else []
-            retry_policy = RetryPolicy(max_retries=2 if action in {"math", "flaky"} else 1, backoff_seconds=0.05)
+            retry_policy = RetryPolicy(max_retries=2 if action in {"math", "flaky", "code_exec"} else 1, backoff_seconds=0.05)
             steps.append(
                 PlannedStep(
                     id=step_id,
@@ -65,8 +75,8 @@ class PlannerAgent:
                     expected_output="A non-empty tool output string.",
                     completion_criteria="Tool call succeeds and returns output.",
                     retry_policy=retry_policy,
-                    fallback_action="echo" if action in {"flaky", "slow_echo"} else None,
-                    fallback_on_errors=["timeout", "runtime"] if action in {"flaky", "slow_echo"} else None,
+                    fallback_action="echo" if action in {"flaky", "slow_echo", "search", "http_request"} else None,
+                    fallback_on_errors=["timeout", "runtime"] if action in {"flaky", "slow_echo", "search", "http_request"} else None,
                 )
             )
             previous_step_id = step_id

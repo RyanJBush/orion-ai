@@ -6,6 +6,7 @@ const navItems = [
   { href: '/tasks', label: 'Tasks' },
   { href: '/execution', label: 'Workflow Execution' },
   { href: '/agents', label: 'Agent Monitor' },
+  { href: '/demo', label: '⚡ Demo Scenarios' },
   { href: '/settings', label: 'Settings' },
 ]
 

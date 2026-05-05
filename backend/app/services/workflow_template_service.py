@@ -40,17 +40,17 @@ class WorkflowTemplateService:
         demo_specs = [
             {
                 "name": "demo-research-workflow",
-                "description": "Research workflow with discovery, synthesis, and recommendation steps.",
+                "description": "Research workflow: discover vendor landscape, compare pricing, draft recommendation.",
                 "task_title": "Research AI observability options",
-                "task_description": "collect vendor landscape. then compare pricing 10 20 30. then draft recommendation",
+                "task_description": "search AI observability vendor landscape. then compare pricing 10 20 30. then draft recommendation",
                 "workflow_name": "default",
                 "tags": ["demo", "research"],
             },
             {
                 "name": "demo-analysis-workflow",
-                "description": "Analysis workflow with calculations and summary generation.",
+                "description": "Analysis workflow: fetch KPI data via API, compute totals, summarise trend.",
                 "task_title": "Analyze incident trends",
-                "task_description": "compute incident totals 14 7 9. then summarize trend and risks",
+                "task_description": "fetch api/incidents data. then compute incident totals 14 7 9. then summarize trend and risks",
                 "workflow_name": "default",
                 "tags": ["demo", "analysis"],
             },
@@ -64,9 +64,9 @@ class WorkflowTemplateService:
             },
             {
                 "name": "demo-kpi-report",
-                "description": "End-to-end KPI report workflow with data extraction and calculations.",
+                "description": "End-to-end KPI report: fetch live data, compute growth, draft executive summary.",
                 "task_title": "Generate KPI report",
-                "task_description": "Collect metrics. calculate 12 + 30. then draft summary.",
+                "task_description": "fetch api/kpi metrics. then calculate 12 + 30. then draft summary.",
                 "workflow_name": "default",
                 "tags": ["demo", "reporting"],
             },
@@ -85,6 +85,14 @@ class WorkflowTemplateService:
                 "task_description": "flaky integration call. then summarize outcome",
                 "workflow_name": "default",
                 "tags": ["demo", "resilience"],
+            },
+            {
+                "name": "demo-code-execution",
+                "description": "Safe arithmetic code execution workflow with result verification.",
+                "task_title": "Run code execution workflow",
+                "task_description": "evaluate expression (42 * 8) + 100. then summarize result",
+                "workflow_name": "default",
+                "tags": ["demo", "code"],
             },
         ]
 

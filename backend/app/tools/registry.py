@@ -2,7 +2,16 @@ from concurrent.futures import ThreadPoolExecutor, TimeoutError
 import logging
 
 from app.tools.base import Tool, ToolPermissionError, ToolRuntimeError, ToolSchema, ToolTimeoutError
-from app.tools.default_tools import EchoTool, FlakyTool, MathTool, SensitiveEchoTool, SlowEchoTool
+from app.tools.default_tools import (
+    CodeExecTool,
+    EchoTool,
+    FlakyTool,
+    HttpRequestTool,
+    MathTool,
+    SearchTool,
+    SensitiveEchoTool,
+    SlowEchoTool,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +93,51 @@ class ToolRegistry:
                 requires_approval=True,
                 risk_level="high",
                 estimated_cost_tier="medium",
+                supports_streaming=False,
+                idempotent=True,
+            ),
+        )
+        self.register(
+            SearchTool(),
+            ToolSchema(
+                name="search",
+                description="Keyword search against a built-in knowledge corpus (demo-safe).",
+                input_schema={"input_text": "string"},
+                output_schema={"output_text": "string"},
+                timeout_seconds=2.0,
+                allowed_workers=["worker-general", "worker-math"],
+                is_demo_tool=True,
+                estimated_cost_tier="low",
+                supports_streaming=False,
+                idempotent=True,
+            ),
+        )
+        self.register(
+            HttpRequestTool(),
+            ToolSchema(
+                name="http_request",
+                description="Simulated HTTP GET against whitelisted mock API endpoints.",
+                input_schema={"input_text": "string"},
+                output_schema={"output_text": "string"},
+                timeout_seconds=3.0,
+                allowed_workers=["worker-general"],
+                is_demo_tool=True,
+                estimated_cost_tier="low",
+                supports_streaming=False,
+                idempotent=True,
+            ),
+        )
+        self.register(
+            CodeExecTool(),
+            ToolSchema(
+                name="code_exec",
+                description="Evaluates safe arithmetic expressions in a sandboxed context.",
+                input_schema={"input_text": "string"},
+                output_schema={"output_text": "string"},
+                timeout_seconds=2.0,
+                allowed_workers=["worker-math", "worker-general"],
+                is_demo_tool=True,
+                estimated_cost_tier="low",
                 supports_streaming=False,
                 idempotent=True,
             ),

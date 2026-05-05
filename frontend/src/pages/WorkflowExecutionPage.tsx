@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
 import { ExecutionLogPanel } from '../components/workflow/ExecutionLogPanel'
 import { WorkflowSteps } from '../components/workflow/WorkflowSteps'
@@ -20,7 +21,8 @@ import {
 } from '../services/api'
 
 export function WorkflowExecutionPage() {
-  const [runIdInput, setRunIdInput] = useState('1')
+  const [searchParams] = useSearchParams()
+  const [runIdInput, setRunIdInput] = useState(() => searchParams.get('run') ?? '1')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [run, setRun] = useState<ApiWorkflowRun | null>(null)
@@ -50,7 +52,6 @@ export function WorkflowExecutionPage() {
       setTimeline(timelineData)
       setMetrics(metricsData)
       setInsight(insightData)
-      setSelectedStepId(runData.steps[0]?.id ?? null)
       setSelectedStepId((prev) => prev ?? runData.steps[0]?.id ?? null)
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Unable to load workflow run.')
@@ -58,6 +59,23 @@ export function WorkflowExecutionPage() {
       setLoading(false)
     }
   }, [runId])
+
+  // Auto-load if a run param was passed in the URL
+  useEffect(() => {
+    const paramRun = searchParams.get('run')
+    if (paramRun) {
+      setRunIdInput(paramRun)
+    }
+  }, [searchParams])
+
+  // Initial auto-load once runId is known and valid
+  const hasAutoLoaded = useState(false)
+  useEffect(() => {
+    if (!hasAutoLoaded[0] && runId > 0) {
+      hasAutoLoaded[1](true)
+      refreshRun()
+    }
+  }, [runId, refreshRun, hasAutoLoaded])
 
   const runAction = useCallback(
     async (action: 'pause' | 'resume' | 'cancel' | 'replay') => {

@@ -74,6 +74,68 @@ export interface ApiRunInsight {
   suggested_actions: string[]
 }
 
+export interface ApiTask {
+  id: number
+  title: string
+  description?: string | null
+  status: Status
+  created_at?: string
+}
+
+export interface ApiTaskSubmitRequest {
+  title: string
+  description?: string
+  workflow_name?: string
+  actor_id?: string
+}
+
+export interface ApiWorkflowTemplate {
+  id: number
+  name: string
+  description: string
+  task_title: string
+  task_description: string
+  workflow_name: string
+  tags: string[]
+  is_demo: boolean
+}
+
+export interface ApiAgent {
+  id: number
+  name: string
+  role: string
+  model: string
+}
+
+export interface ApiAgentStat {
+  id: number
+  name: string
+  role: string
+  model: string
+  status: 'healthy' | 'degraded' | 'offline'
+  allowed_tools: string[]
+  tool_count: number
+}
+
+export interface ApiToolHealth {
+  tool: string
+  healthy: boolean
+  status: string
+}
+
+export interface ApiToolSchema {
+  name: string
+  description: string
+  timeout_seconds: number
+  is_demo_tool: boolean
+  requires_approval: boolean
+  risk_level: string
+  estimated_cost_tier: string
+  idempotent: boolean
+}
+
+// ── Workflow Runs ──────────────────────────────────────────────────────────
+
 export function getWorkflowRun(runId: number) {
   return fetchJSON<ApiWorkflowRun>(`/workflows/runs/${runId}`)
 }
@@ -107,4 +169,51 @@ export function replayRun(runId: number, fromStepId?: string) {
     method: 'POST',
     body: JSON.stringify({ from_step_id: fromStepId || null }),
   })
+}
+
+// ── Tasks ──────────────────────────────────────────────────────────────────
+
+export function listTasks() {
+  return fetchJSON<ApiTask[]>('/tasks')
+}
+
+export function submitTask(payload: ApiTaskSubmitRequest) {
+  return fetchJSON<ApiWorkflowRun>('/tasks/submit', {
+    method: 'POST',
+    body: JSON.stringify({ actor_id: 'ui-user', workflow_name: 'default', ...payload }),
+  })
+}
+
+// ── Workflow Templates ─────────────────────────────────────────────────────
+
+export function listWorkflowTemplates() {
+  return fetchJSON<ApiWorkflowTemplate[]>('/workflows/templates')
+}
+
+export function seedDemoTemplates() {
+  return fetchJSON<ApiWorkflowTemplate[]>('/workflows/templates/seed-demo', { method: 'POST' })
+}
+
+export function runWorkflowTemplate(templateId: number) {
+  return fetchJSON<ApiWorkflowRun>(`/workflows/templates/${templateId}/run`, { method: 'POST' })
+}
+
+// ── Agents ─────────────────────────────────────────────────────────────────
+
+export function listAgentStats() {
+  return fetchJSON<ApiAgentStat[]>('/agents/stats')
+}
+
+export function seedDemoAgents() {
+  return fetchJSON<ApiAgent[]>('/agents/seed-demo', { method: 'POST' })
+}
+
+// ── Tools ──────────────────────────────────────────────────────────────────
+
+export function getToolHealth() {
+  return fetchJSON<ApiToolHealth[]>('/tools/health')
+}
+
+export function getToolRegistry() {
+  return fetchJSON<ApiToolSchema[]>('/tools/registry')
 }

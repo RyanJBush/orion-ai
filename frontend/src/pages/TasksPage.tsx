@@ -1,24 +1,58 @@
-import { type FormEvent, useMemo, useState } from 'react'
+import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
 
 import { PageHeader } from '../components/PageHeader'
 import { StatusBadge } from '../components/StatusBadge'
-import { mockTasks } from '../data/mock'
+import { listTasks, submitTask, type ApiTask, type ApiWorkflowRun } from '../services/api'
 
 export function TasksPage() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [workflowName, setWorkflowName] = useState('default')
-  const [submitted, setSubmitted] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitResult, setSubmitResult] = useState<ApiWorkflowRun | null>(null)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+
+  const [tasks, setTasks] = useState<ApiTask[]>([])
+  const [tasksLoading, setTasksLoading] = useState(false)
+  const [tasksError, setTasksError] = useState<string | null>(null)
 
   const canSubmit = useMemo(() => title.trim().length >= 3, [title])
 
-  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const loadTasks = useCallback(async () => {
+    setTasksLoading(true)
+    setTasksError(null)
+    try {
+      const data = await listTasks()
+      setTasks(data)
+    } catch (err) {
+      setTasksError(err instanceof Error ? err.message : 'Unable to load tasks.')
+    } finally {
+      setTasksLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadTasks()
+  }, [loadTasks])
+
+  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!canSubmit) return
 
-    setSubmitted(`Submitted "${title}" to workflow "${workflowName}".`)
-    setTitle('')
-    setDescription('')
+    setSubmitting(true)
+    setSubmitError(null)
+    setSubmitResult(null)
+    try {
+      const run = await submitTask({ title: title.trim(), description: description.trim() || undefined, workflow_name: workflowName })
+      setSubmitResult(run)
+      setTitle('')
+      setDescription('')
+      await loadTasks()
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'Submission failed.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -48,25 +82,41 @@ export function TasksPage() {
             <option value="ops">ops</option>
           </select>
         </label>
-        <button type="submit" disabled={!canSubmit}>
-          Submit Task
+        <button type="submit" disabled={!canSubmit || submitting}>
+          {submitting ? 'Submitting…' : 'Submit Task'}
         </button>
-        {submitted ? <p className="success-text">{submitted}</p> : null}
+        {submitError ? <p className="error-text">{submitError}</p> : null}
+        {submitResult ? (
+          <p className="success-text">
+            Task submitted — Run #{submitResult.id} created with status{' '}
+            <strong>{submitResult.status}</strong> ({submitResult.steps.length} steps).
+          </p>
+        ) : null}
       </form>
 
       <div className="panel">
-        <h3>Recent Tasks</h3>
-        <ul className="task-list">
-          {mockTasks.map((task) => (
-            <li key={task.id}>
-              <div>
-                <strong>{task.title}</strong>
-                <p className="muted">Task #{task.id}</p>
-              </div>
-              <StatusBadge status={task.status} />
-            </li>
-          ))}
-        </ul>
+        <div className="panel-title-row">
+          <h3>Recent Tasks</h3>
+          <button type="button" className="btn-small" onClick={loadTasks} disabled={tasksLoading}>
+            {tasksLoading ? 'Refreshing…' : 'Refresh'}
+          </button>
+        </div>
+        {tasksError ? <p className="error-text">{tasksError}</p> : null}
+        {tasks.length === 0 && !tasksLoading ? (
+          <p className="muted">No tasks yet. Submit one above.</p>
+        ) : (
+          <ul className="task-list">
+            {tasks.map((task) => (
+              <li key={task.id}>
+                <div>
+                  <strong>{task.title}</strong>
+                  <p className="muted">Task #{task.id}{task.description ? ` · ${task.description.slice(0, 60)}` : ''}</p>
+                </div>
+                <StatusBadge status={task.status} />
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </section>
   )
